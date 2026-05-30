@@ -170,3 +170,5 @@ curl -s -X POST http://localhost:8082/api/cards/CARD-XXXXXXXX/unblock
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+<!-- docs: maintenance pass 2026-05-30 -->

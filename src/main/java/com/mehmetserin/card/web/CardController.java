@@ -1,0 +1,73 @@
+package com.mehmetserin.card.web;
+
+import com.mehmetserin.card.model.CardModels.CardView;
+import com.mehmetserin.card.model.CardModels.IssueCardRequest;
+import com.mehmetserin.card.model.CardModels.UpdateLimitRequest;
+import com.mehmetserin.card.model.CardModels.ValidatePanRequest;
+import com.mehmetserin.card.service.CardService;
+import com.mehmetserin.card.service.LuhnValidator;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/cards")
+public class CardController {
+
+    private final CardService cardService;
+
+    public CardController(CardService cardService) {
+        this.cardService = cardService;
+    }
+
+    @PostMapping
+    public ResponseEntity<CardView> issue(@Valid @RequestBody IssueCardRequest request) {
+        CardView view = cardService.issue(request.cardholderName(), request.dailyLimit());
+        return ResponseEntity.created(URI.create("/api/cards/" + view.cardId())).body(view);
+    }
+
+    @GetMapping
+    public List<CardView> list() {
+        return cardService.list();
+    }
+
+    @GetMapping("/{cardId}")
+    public CardView get(@PathVariable String cardId) {
+        return cardService.get(cardId);
+    }
+
+    @PostMapping("/{cardId}/block")
+    public CardView block(@PathVariable String cardId) {
+        return cardService.block(cardId);
+    }
+
+    @PostMapping("/{cardId}/unblock")
+    public CardView unblock(@PathVariable String cardId) {
+        return cardService.unblock(cardId);
+    }
+
+    @PostMapping("/{cardId}/limit")
+    public CardView updateLimit(@PathVariable String cardId, @Valid @RequestBody UpdateLimitRequest request) {
+        return cardService.updateLimit(cardId, request.dailyLimit());
+    }
+
+    @PostMapping("/validate")
+    public Map<String, Object> validate(@Valid @RequestBody ValidatePanRequest request) {
+        boolean valid = LuhnValidator.isValid(request.pan());
+        return Map.of("pan", request.pan(), "valid", valid);
+    }
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "healthy", "service", "card-management-service");
+    }
+}

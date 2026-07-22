@@ -1,17 +1,29 @@
 package com.mehmetserin.card.model;
 
 import com.mehmetserin.card.model.CardModels.CardStatus;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
 
 import java.math.BigDecimal;
 
+@Entity
 public class Card {
 
-    private final String cardId;
-    private final String cardholderName;
-    private final String pan;
-    private final String expiry;
+    @Id
+    private String cardId;
+    private String cardholderName;
+    private String pan;
+    private String expiry;
+
+    @Enumerated(EnumType.STRING)
     private CardStatus status;
     private BigDecimal dailyLimit;
+
+    protected Card() {
+        // required by JPA
+    }
 
     public Card(String cardId, String cardholderName, String pan, String expiry,
                 CardStatus status, BigDecimal dailyLimit) {

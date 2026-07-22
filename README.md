@@ -2,9 +2,22 @@
 
 Card issuance and lifecycle microservice: issue **demo** cards with a Luhn-valid PAN (test IIN `400000`), mask the number, manage daily limits, and block / unblock.
 
-Built with **Java 17** and **Spring Boot 3**. In-memory storage keeps it runnable with zero infrastructure.
+Built with **Java 17** and **Spring Boot 3**. Cards are persisted to an **H2 file database** (via Spring Data JPA) so issued cards survive a restart, with zero external infrastructure to run.
 
 > Educational demo only. Not PCI DSS compliant. Generated PANs use a documented test IIN and must never be treated as real card numbers.
+
+## Scope (honest)
+
+This is a learning / portfolio service, not a production card platform.
+
+| Capability | Status |
+|------------|--------|
+| Issue a Luhn-valid demo card, mask PAN, manage limits, block/unblock | Implemented |
+| H2 file persistence of cards (survives restart) | Implemented |
+| Luhn PAN validation endpoint | Implemented |
+| Real card network / issuer processor integration | Not included |
+| PCI DSS controls (tokenization, HSM, encrypted storage) | Not included |
+| AuthN/AuthZ on the API | Not included |
 
 ## Architecture
 
@@ -35,6 +48,7 @@ stateDiagram-v2
 - Validate endpoint returns `{ valid, panLast4 }` — never echoes the full PAN
 - Daily limit updates
 - Block / unblock lifecycle
+- Cards persisted to an H2 file database — issued cards survive a restart
 
 ## Domain model
 
@@ -56,13 +70,19 @@ classDiagram
     }
     class CardService {
         <<service>>
-        -cards: Map~String, Card~
+        -cardRepository: CardRepository
         +issue(name, dailyLimit) CardView
         +get(cardId) CardView
         +list() List~CardView~
         +block(cardId) CardView
         +unblock(cardId) CardView
         +updateLimit(cardId, dailyLimit) CardView
+    }
+    class CardRepository {
+        <<repository>>
+        +save(card) Card
+        +findById(cardId) Optional~Card~
+        +findAll() List~Card~
     }
     class LuhnValidator {
         <<utility>>
@@ -108,7 +128,8 @@ classDiagram
     }
     CardController --> CardService
     CardController ..> LuhnValidator
-    CardService o-- Card
+    CardService --> CardRepository
+    CardRepository ..> Card
     CardService ..> LuhnValidator
     Card --> CardStatus
     CardView --> CardStatus
@@ -165,7 +186,8 @@ curl -s -X POST http://localhost:8082/api/cards/CARD-XXXXXXXX/unblock
 
 - PANs are generated on a demo BIN and completed with a computed Luhn check digit
 - Only masked PANs (`**** **** **** 1234`) leave the service
-- Storage is in-memory and resets on restart
+- Storage is an H2 file database (`./data/card-management.mv.db`, gitignored) via Spring Data
+  JPA; `spring.jpa.hibernate.ddl-auto=update` lets the schema self-create on first run
 
 ## License
 

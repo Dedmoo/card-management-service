@@ -1,19 +1,41 @@
 package com.mehmetserin.card;
 
+import com.mehmetserin.card.model.Card;
 import com.mehmetserin.card.model.CardModels.CardStatus;
 import com.mehmetserin.card.model.CardModels.CardView;
+import com.mehmetserin.card.repository.CardRepository;
 import com.mehmetserin.card.service.CardService;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CardServiceTest {
 
-    private final CardService service = new CardService();
+    private final Map<String, Card> store = new HashMap<>();
+    private final CardRepository cardRepository = mock(CardRepository.class);
+    private final CardService service = new CardService(cardRepository);
+
+    {
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
+            Card card = invocation.getArgument(0);
+            store.put(card.getCardId(), card);
+            return card;
+        });
+        when(cardRepository.findById(any(String.class))).thenAnswer(invocation ->
+                Optional.ofNullable(store.get(invocation.getArgument(0, String.class))));
+        when(cardRepository.findAll()).thenAnswer(invocation -> new ArrayList<>(store.values()));
+    }
 
     @Test
     void issue_generatesMaskedActiveCard() {

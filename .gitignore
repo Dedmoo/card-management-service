@@ -6,3 +6,6 @@ target/
 *.iml
 .vscode/
 *.log
+/data/
+*.mv.db
+*.trace.db

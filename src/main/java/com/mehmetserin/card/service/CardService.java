@@ -3,6 +3,7 @@ package com.mehmetserin.card.service;
 import com.mehmetserin.card.model.Card;
 import com.mehmetserin.card.model.CardModels.CardStatus;
 import com.mehmetserin.card.model.CardModels.CardView;
+import com.mehmetserin.card.repository.CardRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -10,9 +11,7 @@ import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class CardService {
@@ -22,7 +21,11 @@ public class CardService {
     private static final int PAN_LENGTH = 16;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final Map<String, Card> cards = new ConcurrentHashMap<>();
+    private final CardRepository cardRepository;
+
+    public CardService(CardRepository cardRepository) {
+        this.cardRepository = cardRepository;
+    }
 
     public CardView issue(String cardholderName, BigDecimal dailyLimit) {
         if (cardholderName == null || cardholderName.isBlank()) {
@@ -42,7 +45,7 @@ public class CardService {
                 CardStatus.ACTIVE,
                 limit);
 
-        cards.put(card.getCardId(), card);
+        cardRepository.save(card);
         return toView(card);
     }
 
@@ -51,18 +54,20 @@ public class CardService {
     }
 
     public List<CardView> list() {
-        return cards.values().stream().map(this::toView).toList();
+        return cardRepository.findAll().stream().map(this::toView).toList();
     }
 
     public CardView block(String cardId) {
         Card card = require(cardId);
         card.setStatus(CardStatus.BLOCKED);
+        cardRepository.save(card);
         return toView(card);
     }
 
     public CardView unblock(String cardId) {
         Card card = require(cardId);
         card.setStatus(CardStatus.ACTIVE);
+        cardRepository.save(card);
         return toView(card);
     }
 
@@ -72,6 +77,7 @@ public class CardService {
         }
         Card card = require(cardId);
         card.setDailyLimit(dailyLimit);
+        cardRepository.save(card);
         return toView(card);
     }
 
@@ -86,11 +92,8 @@ public class CardService {
     }
 
     private Card require(String cardId) {
-        Card card = cards.get(cardId);
-        if (card == null) {
-            throw new CardNotFoundException(cardId);
-        }
-        return card;
+        return cardRepository.findById(cardId)
+                .orElseThrow(() -> new CardNotFoundException(cardId));
     }
 
     private CardView toView(Card card) {

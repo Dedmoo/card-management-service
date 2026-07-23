@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>com.mehmetserin</groupId>
-    <artifactId>card-management-service</artifactId>
+    <artifactId>card-lifecycle-api</artifactId>
     <version>1.0.0</version>
-    <name>card-management-service</name>
-    <description>Card issuance and lifecycle service with Luhn validation and limits</description>
+    <name>CardLifecycleApi</name>
+    <description>Demo card issuance, lifecycle, and daily authorization service</description>
 
     <properties>
         <java.version>17</java.version>

@@ -69,4 +69,32 @@ class CardServiceTest {
     void unknownCard_throws() {
         assertThrows(CardService.CardNotFoundException.class, () -> service.get("CARD-UNKNOWN"));
     }
+
+    @Test
+    void authorize_recordsSpendAndReducesAvailableDailyLimit() {
+        CardView card = service.issue("Authorization User", new BigDecimal("100"));
+
+        var authorization = service.authorize(card.cardId(), new BigDecimal("35"));
+
+        assertEquals(new BigDecimal("35"), authorization.spentToday());
+        assertEquals(new BigDecimal("65"), authorization.availableDailyLimit());
+    }
+
+    @Test
+    void authorize_rejectsBlockedCard() {
+        CardView card = service.issue("Blocked Authorization User", new BigDecimal("100"));
+        service.block(card.cardId());
+
+        assertThrows(Card.CardAuthorizationException.class,
+                () -> service.authorize(card.cardId(), new BigDecimal("10")));
+    }
+
+    @Test
+    void authorize_rejectsAmountOverRemainingDailyLimit() {
+        CardView card = service.issue("Limit Authorization User", new BigDecimal("100"));
+        service.authorize(card.cardId(), new BigDecimal("70"));
+
+        assertThrows(Card.CardAuthorizationException.class,
+                () -> service.authorize(card.cardId(), new BigDecimal("31")));
+    }
 }

@@ -1,7 +1,10 @@
 package com.mehmetserin.card.model;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
@@ -13,8 +16,8 @@ public class CardModels {
     }
 
     public record IssueCardRequest(
-            @NotBlank String cardholderName,
-            @Positive BigDecimal dailyLimit) {
+            @NotBlank @Size(max = 100) String cardholderName,
+            @Positive @Digits(integer = 12, fraction = 2) BigDecimal dailyLimit) {
     }
 
     public record CardView(
@@ -23,12 +26,26 @@ public class CardModels {
             String maskedPan,
             String expiry,
             CardStatus status,
-            BigDecimal dailyLimit) {
+            BigDecimal dailyLimit,
+            BigDecimal spentToday,
+            BigDecimal availableDailyLimit) {
     }
 
-    public record ValidatePanRequest(@NotBlank String pan) {
+    public record ValidatePanRequest(@NotBlank @Size(max = 32) String pan) {
     }
 
-    public record UpdateLimitRequest(@Positive BigDecimal dailyLimit) {
+    public record UpdateLimitRequest(
+            @Positive @Digits(integer = 12, fraction = 2) BigDecimal dailyLimit) {
+    }
+
+    public record AuthorizeCardRequest(
+            @DecimalMin(value = "0.01") @Digits(integer = 12, fraction = 2) BigDecimal amount) {
+    }
+
+    public record AuthorizationView(
+            String cardId,
+            BigDecimal amount,
+            BigDecimal spentToday,
+            BigDecimal availableDailyLimit) {
     }
 }

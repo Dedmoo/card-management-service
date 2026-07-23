@@ -3,8 +3,10 @@ package com.mehmetserin.card.service;
 import com.mehmetserin.card.model.Card;
 import com.mehmetserin.card.model.CardModels.CardStatus;
 import com.mehmetserin.card.model.CardModels.CardView;
+import com.mehmetserin.card.model.CardModels.AuthorizationView;
 import com.mehmetserin.card.repository.CardRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -81,6 +83,18 @@ public class CardService {
         return toView(card);
     }
 
+    @Transactional
+    public AuthorizationView authorize(String cardId, BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
+            throw new IllegalArgumentException("Authorization amount must be positive.");
+        }
+        Card card = require(cardId);
+        LocalDate today = LocalDate.now();
+        BigDecimal available = card.authorize(amount, today);
+        cardRepository.save(card);
+        return new AuthorizationView(card.getCardId(), amount, card.getSpentToday(today), available);
+    }
+
     private String generatePan() {
         var sb = new StringBuilder(BIN);
         while (sb.length() < PAN_LENGTH - 1) {
@@ -103,7 +117,9 @@ public class CardService {
                 card.maskedPan(),
                 card.getExpiry(),
                 card.getStatus(),
-                card.getDailyLimit());
+            card.getDailyLimit(),
+            card.getSpentToday(LocalDate.now()),
+            card.getAvailableDailyLimit(LocalDate.now()));
     }
 
     public static class CardNotFoundException extends RuntimeException {

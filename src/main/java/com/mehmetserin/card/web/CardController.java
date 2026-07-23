@@ -4,6 +4,8 @@ import com.mehmetserin.card.model.CardModels.CardView;
 import com.mehmetserin.card.model.CardModels.IssueCardRequest;
 import com.mehmetserin.card.model.CardModels.UpdateLimitRequest;
 import com.mehmetserin.card.model.CardModels.ValidatePanRequest;
+import com.mehmetserin.card.model.CardModels.AuthorizeCardRequest;
+import com.mehmetserin.card.model.CardModels.AuthorizationView;
 import com.mehmetserin.card.service.CardService;
 import com.mehmetserin.card.service.LuhnValidator;
 import jakarta.validation.Valid;
@@ -60,6 +62,13 @@ public class CardController {
         return cardService.updateLimit(cardId, request.dailyLimit());
     }
 
+    @PostMapping("/{cardId}/authorize")
+    public AuthorizationView authorize(
+            @PathVariable String cardId,
+            @Valid @RequestBody AuthorizeCardRequest request) {
+        return cardService.authorize(cardId, request.amount());
+    }
+
     @PostMapping("/validate")
     public Map<String, Object> validate(@Valid @RequestBody ValidatePanRequest request) {
         String digits = request.pan() == null ? "" : request.pan().replaceAll("\\D", "");
@@ -70,6 +79,6 @@ public class CardController {
 
     @GetMapping("/health")
     public Map<String, String> health() {
-        return Map.of("status", "healthy", "service", "card-management-service");
+        return Map.of("status", "healthy", "service", "CardLifecycleApi");
     }
 }

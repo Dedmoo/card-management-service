@@ -1,5 +1,6 @@
 package com.mehmetserin.card.web;
 
+import com.mehmetserin.card.model.Card.CardAuthorizationException;
 import com.mehmetserin.card.service.CardService.CardNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +30,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CardAuthorizationException.class)
+    public ResponseEntity<Map<String, String>> handleAuthorization(CardAuthorizationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "authorization_declined", "message", ex.getMessage()));
     }
 }
